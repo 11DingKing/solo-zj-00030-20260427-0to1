@@ -9,6 +9,9 @@
     "start": "node dist/index.js",
     "db:migrate": "tsx src/db/migrate.ts"
   },
+  "overrides": {
+    "is-generator-function": "1.0.10"
+  },
   "dependencies": {
     "@koa/cors": "^5.0.0",
     "bcryptjs": "^2.4.3",

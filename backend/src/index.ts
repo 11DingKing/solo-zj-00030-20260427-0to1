@@ -57,42 +57,7 @@ const startServer = async () => {
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
     });
   } catch (error) {
-    console.error("Failed to start server:"
-    }));
-
-    app.use(bodyParser({
-      jsonLimit: '10mb',
-    }));
-
-    app.use(async (ctx, next) => {
-      const start = Date.now();
-      try {
-        await next();
-        const ms = Date.now() - start;
-        console.log(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms`);
-      } catch (err: any) {
-        ctx.status = err.status || 500;
-        ctx.body = { error: err.message || 'Internal Server Error' };
-        console.error(`Error: ${ctx.method} ${ctx.url}`, err);
-      }
-    });
-
-    mainRouter.use('/api', router.routes(), router.allowedMethods());
-    app.use(mainRouter.routes()).use(mainRouter.allowedMethods());
-
-    app.listen(PORT, () => {
-      console.log(`✓ Server is running on port ${PORT}`);
-      console.log(`✓ API endpoint: http://localhost:${PORT}/api`);
-      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log('========================================');
-      console.log('  Team Daily Report Management System');
-      console.log('========================================');
-      console.log('Demo Account:');
-      console.log('  Username: superadmin');
-      console.log('  Password: admin123');
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 };
