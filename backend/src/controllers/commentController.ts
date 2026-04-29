@@ -2,8 +2,33 @@ import { Context } from 'koa';
 import { query } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
+const isUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+const resolveUserIds = async (identifiers: string[]): Promise<string[]> => {
+  const userIds: string[] = [];
+  
+  for (const identifier of identifiers) {
+    if (isUUID(identifier)) {
+      userIds.push(identifier);
+    } else {
+      const result = await query(
+        'SELECT id FROM users WHERE username = $1 OR name = $1 LIMIT 1',
+        [identifier]
+      );
+      if (result.rows.length > 0) {
+        userIds.push(result.rows[0].id);
+      }
+    }
+  }
+  
+  return [...new Set(userIds)];
+};
+
 export const createComment = async (ctx: Context) => {
-  const user = ctx.state.user as { userId: string };
+  const user = ctx.state.user as { userId: string; username: string };
   const { reportId, reportType, content, mentions } = ctx.request.body as {
     reportId: string;
     reportType: 'daily' | 'weekly';
@@ -39,15 +64,21 @@ export const createComment = async (ctx: Context) => {
       return;
     }
 
+    const mentionUserIds = mentions && mentions.length > 0 
+      ? await resolveUserIds(mentions) 
+      : [];
+
     const result = await query(
       `INSERT INTO comments (id, user_id, report_id, report_type, content, mentions)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [uuidv4(), user.userId, reportId, reportType, content, mentions || []]
+      [uuidv4(), user.userId, reportId, reportType, content, mentionUserIds]
     );
 
-    if (mentions && mentions.length > 0) {
-      for (const mentionedUserId of mentions) {
+    const comment = result.rows[0];
+
+    if (mentionUserIds.length > 0) {
+      for (const mentionedUserId of mentionUserIds) {
         if (mentionedUserId !== user.userId) {
           await query(
             `INSERT INTO notifications (id, user_id, type, title, content, related_id, related_type)
@@ -57,11 +88,12 @@ export const createComment = async (ctx: Context) => {
               mentionedUserId,
               'mention',
               '有人在评论中@了你',
-              content.substring(0, 100),
+              content.substring(0, 100) + (content.length > 100 ? '...' : ''),
               reportId,
               reportType,
             ]
           );
+          console.log(`Notification sent to user ${mentionedUserId} for mention`);
         }
       }
     }
@@ -75,15 +107,24 @@ export const createComment = async (ctx: Context) => {
           report.user_id,
           'comment',
           '你的报告收到了新评论',
-          content.substring(0, 100),
+          content.substring(0, 100) + (content.length > 100 ? '...' : ''),
           reportId,
           reportType,
         ]
       );
+      console.log(`Notification sent to report owner ${report.user_id}`);
     }
 
+    const commentWithUser = await query(
+      `SELECT c.*, u.name as user_name, u.username, u.avatar
+       FROM comments c
+       JOIN users u ON c.user_id = u.id
+       WHERE c.id = $1`,
+      [comment.id]
+    );
+
     ctx.status = 201;
-    ctx.body = result.rows[0];
+    ctx.body = commentWithUser.rows[0] || comment;
   } catch (error) {
     console.error('Create comment error:', error);
     ctx.status = 500;
@@ -146,15 +187,27 @@ export const updateComment = async (ctx: Context) => {
       return;
     }
 
+    const mentionUserIds = mentions && mentions.length > 0 
+      ? await resolveUserIds(mentions) 
+      : [];
+
     const result = await query(
       `UPDATE comments 
        SET content = $1, mentions = $2, updated_at = CURRENT_TIMESTAMP
        WHERE id = $3
        RETURNING *`,
-      [content, mentions || [], commentId]
+      [content, mentionUserIds, commentId]
     );
 
-    ctx.body = result.rows[0];
+    const commentWithUser = await query(
+      `SELECT c.*, u.name as user_name, u.username, u.avatar
+       FROM comments c
+       JOIN users u ON c.user_id = u.id
+       WHERE c.id = $1`,
+      [result.rows[0].id]
+    );
+
+    ctx.body = commentWithUser.rows[0] || result.rows[0];
   } catch (error) {
     console.error('Update comment error:', error);
     ctx.status = 500;
