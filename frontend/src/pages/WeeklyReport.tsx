@@ -8,7 +8,13 @@ import {
   projectApi,
   templateApi,
 } from "../services/api";
-import { Team, WeeklyReport, WorkHourEntry, Project, Template } from "../types";
+import {
+  Team,
+  WeeklyReport as WeeklyReportType,
+  WorkHourEntry,
+  Project,
+  Template,
+} from "../types";
 import ReactMarkdown from "react-markdown";
 import toast from "react-hot-toast";
 
@@ -17,7 +23,7 @@ const WeeklyReport: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [report, setReport] = useState<WeeklyReport | null>(null);
+  const [report, setReport] = useState<WeeklyReportType | null>(null);
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -104,7 +110,9 @@ const WeeklyReport: React.FC = () => {
         setNextWeekPlan("");
         setCoordinationNeeded("");
       } else if (Array.isArray(data) && data.length > 0) {
-        const myReport = data.find((r: WeeklyReport) => r.user_id === user?.id);
+        const myReport = data.find(
+          (r: WeeklyReportType) => r.user_id === user?.id,
+        );
         if (myReport) {
           setReport(myReport);
           setSummary(myReport.summary || "");
@@ -123,12 +131,14 @@ const WeeklyReport: React.FC = () => {
           }
         }
       } else if (data && typeof data === "object") {
-        setReport(data as WeeklyReport);
-        setSummary((data as WeeklyReport).summary || "");
-        setNextWeekPlan((data as WeeklyReport).next_week_plan || "");
-        setCoordinationNeeded((data as WeeklyReport).coordination_needed || "");
-        if ((data as WeeklyReport).work_hours) {
-          setWorkHours((data as WeeklyReport).work_hours!);
+        setReport(data as WeeklyReportType);
+        setSummary((data as WeeklyReportType).summary || "");
+        setNextWeekPlan((data as WeeklyReportType).next_week_plan || "");
+        setCoordinationNeeded(
+          (data as WeeklyReportType).coordination_needed || "",
+        );
+        if ((data as WeeklyReportType).work_hours) {
+          setWorkHours((data as WeeklyReportType).work_hours!);
         }
       } else {
         setReport(null);

@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useAuthStore } from '../store/authStore'
 import { teamApi, dailyReportApi, templateApi, commentApi } from '../services/api'
-import { Team, DailyReport, Template, Comment, TeamMember } from '../types'
+import { Team, DailyReport as DailyReportType, Template, Comment, TeamMember } from '../types'
 import ReactMarkdown from 'react-markdown'
 import toast from 'react-hot-toast'
 
@@ -12,7 +12,7 @@ const DailyReport: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([])
   const [selectedTeam, setSelectedTeam] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
-  const [report, setReport] = useState<DailyReport | null>(null)
+  const [report, setReport] = useState<DailyReportType | null>(null)
   const [template, setTemplate] = useState<Template | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -74,7 +74,7 @@ const DailyReport: React.FC = () => {
         setTomorrowPlan('')
         setProblems('')
       } else if (Array.isArray(data) && data.length > 0) {
-        const myReport = data.find((r: DailyReport) => r.user_id === user?.id)
+        const myReport = data.find((r: DailyReportType) => r.user_id === user?.id)
         if (myReport) {
           setReport(myReport)
           setTodayCompleted(myReport.today_completed || '')
@@ -87,10 +87,10 @@ const DailyReport: React.FC = () => {
           setProblems(data[0].problems || '')
         }
       } else if (data && typeof data === 'object') {
-        setReport(data as DailyReport)
-        setTodayCompleted((data as DailyReport).today_completed || '')
-        setTomorrowPlan((data as DailyReport).tomorrow_plan || '')
-        setProblems((data as DailyReport).problems || '')
+        setReport(data as DailyReportType)
+        setTodayCompleted((data as DailyReportType).today_completed || '')
+        setTomorrowPlan((data as DailyReportType).tomorrow_plan || '')
+        setProblems((data as DailyReportType).problems || '')
       } else {
         setReport(null)
         setTodayCompleted('')
