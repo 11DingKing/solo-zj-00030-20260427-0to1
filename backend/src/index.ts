@@ -5,6 +5,7 @@ import { config } from "./config";
 import router from "./routes";
 import pool from "./db";
 import redis from "./redis";
+import initializeDatabase from "./db/init";
 
 const app = new Koa();
 
@@ -48,6 +49,8 @@ const startServer = async () => {
     const dbClient = await pool.connect();
     console.log("Database connected successfully");
     dbClient.release();
+
+    await initializeDatabase();
 
     await redis.ping();
     console.log("Redis connected successfully");
