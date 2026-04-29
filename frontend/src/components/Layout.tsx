@@ -53,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ]
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       <aside className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-brand">📋 日报周报系统</div>

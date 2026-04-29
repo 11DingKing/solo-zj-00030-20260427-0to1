@@ -33,7 +33,7 @@ export const getSubmissionRateRanking = async (ctx: Context) => {
        JOIN team_members tm ON u.id = tm.user_id
        LEFT JOIN daily_reports dr ON u.id = dr.user_id 
          AND dr.team_id = tm.team_id 
-         AND dr.report_date >= CURRENT_DATE - INTERVAL '$2 days'
+         AND dr.report_date >= CURRENT_DATE - INTERVAL '1 day' * $2
        WHERE tm.team_id = $3
        GROUP BY u.id, u.name, u.username
        ORDER BY submission_rate DESC NULLS LAST`,
@@ -67,7 +67,7 @@ export const getAverageWordCountTrend = async (ctx: Context) => {
          ) as avg_word_count
        FROM daily_reports
        WHERE team_id = $1 
-         AND report_date >= CURRENT_DATE - INTERVAL '$2 days'
+         AND report_date >= CURRENT_DATE - INTERVAL '1 day' * $2
          AND status = 'submitted'
        GROUP BY report_date
        ORDER BY report_date ASC`,
